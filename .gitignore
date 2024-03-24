@@ -1,0 +1,11 @@
+# /images/
+# images
+# /videos/
+# videos
+models
+/models/
+record
+/record/
+track
+/track/
+__pycache__
