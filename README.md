@@ -1,2 +1,2 @@
 # SLR
-Real-time sign language recognition and translation 
+Real-time Vietnamese sign language recognition and translation 
