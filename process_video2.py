@@ -14,6 +14,7 @@ from ultis.functions import average_pose_to_hand_distance
 
 # https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task
 # https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task
+# https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task
 
 # Image from top left to bottom right in Uniform(0,1)
 # Dont need to care about mirror image, 'cause I will flip it eventually
@@ -243,11 +244,12 @@ def draw_landmarks_on_image(rgb_image, detection_result, mode = "pose"):
     return annotated_image
 
 
-def tracking_an_image(pose_detector, hand_detector, image_file = "demo.jpg"):
+def tracking_an_image(pose_detector, hand_detector,image, image_file = None):
     """
         Track an image
     """
-    image = mp.Image.create_from_file(image_file)
+    if image_file:
+        image = mp.Image.create_from_file(image_file)
 
     # STEP 4: Detect pose landmarks from the input image.
     detection_pose = pose_detector.detect(image)
@@ -259,45 +261,56 @@ def tracking_an_image(pose_detector, hand_detector, image_file = "demo.jpg"):
     return image, detection_hand, detection_pose
 
 
+def detect_image(image = None, pose_detector = None, hand_detector = None, image_file = None, draw = False):
+    
+    assert image != None or image_file != None
 
-base_pose_options = python.BaseOptions('models/pose_landmarker_full.task')
-pose_options = vision.PoseLandmarkerOptions(
-    base_options=base_pose_options,
-    running_mode=vision.RunningMode.IMAGE,
-    min_pose_detection_confidence=CONFIDENT, 
-    min_tracking_confidence=CONFIDENT,
-    output_segmentation_masks=False)
-pose_detector = vision.PoseLandmarker.create_from_options(pose_options)
+    if not pose_detector:
+        base_pose_options = python.BaseOptions('models/pose_landmarker_full.task')
+        pose_options = vision.PoseLandmarkerOptions(
+            base_options=base_pose_options,
+            running_mode=vision.RunningMode.IMAGE,
+            min_pose_detection_confidence=CONFIDENT, 
+            min_tracking_confidence=CONFIDENT,
+            output_segmentation_masks=False)
+        pose_detector = vision.PoseLandmarker.create_from_options(pose_options)
+
+    if not hand_detector:
+        base_hand_options = python.BaseOptions('models/hand_landmarker.task')
+        hand_options = vision.HandLandmarkerOptions(
+            base_options=base_hand_options,
+            num_hands=2,
+            min_hand_detection_confidence=CONFIDENT, 
+            min_tracking_confidence=CONFIDENT,
+            running_mode=vision.RunningMode.IMAGE)
+        hand_detector = vision.HandLandmarker.create_from_options(hand_options)
+
+    # STEP 3: Load the input image.
+    image, detection_hand, detection_pose = tracking_an_image(pose_detector, hand_detector, image = image, image_file = image_file)
 
 
-base_hand_options = python.BaseOptions('models/hand_landmarker.task')
-hand_options = vision.HandLandmarkerOptions(
-    base_options=base_hand_options,
-    num_hands=2,
-    min_hand_detection_confidence=CONFIDENT, 
-    min_tracking_confidence=CONFIDENT,
-    running_mode=vision.RunningMode.IMAGE)
-hand_detector = vision.HandLandmarker.create_from_options(hand_options)
-
-# STEP 3: Load the input image.
-image, detection_hand, detection_pose = tracking_an_image(pose_detector, hand_detector, image_file = IMAGE_FILE)
+    df = pd.DataFrame({
+                "frame": frame, 
+                "type": type_, 
+                "index": index, 
+                "x": x, 
+                "y": y
+                #"z": z
+            })
 
 
-df = pd.DataFrame({
-            "frame": frame, 
-            "type": type_, 
-            "index": index, 
-            "x": x, 
-            "y": y
-            #"z": z
-        })
+    # print(detection_pose.pose_landmarks)
+    # print(detection_pose.pose_world_landmarks)
 
-df.to_csv(RECORD)
-# print(detection_pose.pose_landmarks)
-# print(detection_pose.pose_world_landmarks)
+    print("DETECTED")
+    
+    if draw:
+        annotated_image = draw_landmarks_on_image(image.numpy_view(), detection_pose)
+        annotated_image = draw_landmarks_on_image(annotated_image, detection_hand, mode = "hand")
+        cv2.imwrite(DESTINATION, annotated_image)
+    return df
 
-print("DETECTED")
-# STEP 5: Process the detection result. In this case, visualize it.
-annotated_image = draw_landmarks_on_image(image.numpy_view(), detection_pose)
-annotated_image = draw_landmarks_on_image(annotated_image, detection_hand, mode = "hand")
-cv2.imwrite(DESTINATION, annotated_image)
+if __name__ == "__main__":
+    df = detect_image(image_file=IMAGE_FILE)
+    df.to_csv(RECORD)
+# 
