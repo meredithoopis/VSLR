@@ -1,6 +1,6 @@
 import cv2 
 import ffmpegcv
-from ultis.video import *
+from SL.ultis.video_utils import *
 
 def get_video_encoding_format(video_path):
     video_capture = cv2.VideoCapture(video_path)
@@ -76,3 +76,5 @@ if __name__ == "__main__":
     # show('videos/cc.mp4')
     # reduce_fps('videos/cc1_reduced_10.mp4', 60)
     print(get_fps('videos/cc1.mp4'))
+
+
