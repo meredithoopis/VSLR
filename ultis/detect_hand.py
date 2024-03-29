@@ -7,8 +7,8 @@ import numpy as np
 import cv2
 import pandas as pd
 
-from ultis.config import *
-from ultis.functions import average_pose_to_hand_distance
+from config import *
+from functions import average_pose_to_hand_distance
 
 # `NullPoint` is a class with 2 attribute `x`, `y` which have null value
 
@@ -20,17 +20,18 @@ from ultis.functions import average_pose_to_hand_distance
 # Dont need to care about mirror image, 'cause I will flip it eventually
 # No legs 
 
+# Only need to use function detect_video (for video) or detect_image (for image)
+
+# All the function below only apply for 1 person. If you want to detect more,
+# contact me and I will fix the code
+
 frame = []
 type_ = []
 index = []
 x, y = [], []
 
-IMAGE_FILE = "images/pose2.jpg"
-DESTINATION = "track/" + IMAGE_FILE.split('/')[-1].split('.')[0]+'_tracked.jpg'
 
-RECORD = "record/" + IMAGE_FILE.split('/')[-1].split('.')[0]+'_record.csv'
-
-def not_handedness(frame_n = 0, side = 'both'):
+def _not_handedness(frame_n = 0, side = 'both'):
     """
     Add null value to the list
     """
@@ -48,7 +49,7 @@ def not_handedness(frame_n = 0, side = 'both'):
         x.append(None)
         y.append(None)
         
-def get_single_hand_detail(landmarks, frame_n = 0, side='Left'):
+def _get_single_hand_detail(landmarks, frame_n = 0, side='Left'):
     part = side + '_hand'
     for i, val in enumerate(landmarks):
         frame.append(frame_n)
@@ -59,7 +60,7 @@ def get_single_hand_detail(landmarks, frame_n = 0, side='Left'):
         
 
 
-def get_hand_detail(detect_hand, frame_n = 0, left_palm = None, right_palm = None):
+def _get_hand_detail(detect_hand, frame_n = 0, left_palm = None, right_palm = None):
     """
         There will be a lot of if-else because the hand-tracking is not correctly 
         specify left and right hand
@@ -72,7 +73,7 @@ def get_hand_detail(detect_hand, frame_n = 0, left_palm = None, right_palm = Non
     hand_landmarks = detect_hand.hand_landmarks
     
     if not handedness:
-        not_handedness(frame_n)
+        _not_handedness(frame_n)
     
     
             
@@ -85,11 +86,11 @@ def get_hand_detail(detect_hand, frame_n = 0, left_palm = None, right_palm = Non
             other_side = 'Right' if side == 'Left' else 'Left'
             
             if side == 'Left':
-                get_single_hand_detail(hand_landmarks[0], frame_n = frame_n, side = side)
-                get_single_hand_detail([NullPoint() for _ in range(20)], frame_n = frame_n, side = other_side)
+                _get_single_hand_detail(hand_landmarks[0], frame_n = frame_n, side = side)
+                _get_single_hand_detail([NullPoint() for _ in range(20)], frame_n = frame_n, side = other_side)
             else:
-                get_single_hand_detail([NullPoint() for _ in range(20)], frame_n = frame_n, side = other_side)
-                get_single_hand_detail(hand_landmarks[0], frame_n = frame_n, side = side)
+                _get_single_hand_detail([NullPoint() for _ in range(20)], frame_n = frame_n, side = other_side)
+                _get_single_hand_detail(hand_landmarks[0], frame_n = frame_n, side = side)
         
         # Checking if there is a 2 left hand and 2 right hand, since there is no 
         # other object to validate, I just mark the left-most hand is Left.
@@ -107,11 +108,11 @@ def get_hand_detail(detect_hand, frame_n = 0, left_palm = None, right_palm = Non
                 second_hand =  handedness[1][0].category_name
                 
             if first_hand=='Left':
-                get_single_hand_detail(hand_landmarks[0], frame_n = frame_n, side = first_hand)
-                get_single_hand_detail(hand_landmarks[1], frame_n = frame_n, side = second_hand)
+                _get_single_hand_detail(hand_landmarks[0], frame_n = frame_n, side = first_hand)
+                _get_single_hand_detail(hand_landmarks[1], frame_n = frame_n, side = second_hand)
             else:
-                get_single_hand_detail(hand_landmarks[1], frame_n = frame_n, side = second_hand)
-                get_single_hand_detail(hand_landmarks[0], frame_n = frame_n, side = first_hand)
+                _get_single_hand_detail(hand_landmarks[1], frame_n = frame_n, side = second_hand)
+                _get_single_hand_detail(hand_landmarks[0], frame_n = frame_n, side = first_hand)
         return
     
     """This is where we have palm to cross-validate
@@ -135,11 +136,11 @@ def get_hand_detail(detect_hand, frame_n = 0, left_palm = None, right_palm = Non
         distance_l_r =  average_pose_to_hand_distance(left_palm, [hand_landmarks[right_index][0]])
         
         if distance_l_l/distance_l_r > MIN_DISTANCE_DIFF:
-            get_single_hand_detail(hand_landmarks[left_index], frame_n = frame_n, side = 'Right')
-            get_single_hand_detail(hand_landmarks[right_index], frame_n = frame_n, side = 'Left')
+            _get_single_hand_detail(hand_landmarks[left_index], frame_n = frame_n, side = 'Right')
+            _get_single_hand_detail(hand_landmarks[right_index], frame_n = frame_n, side = 'Left')
         else: 
-            get_single_hand_detail(hand_landmarks[left_index], frame_n = frame_n, side = 'Left')
-            get_single_hand_detail(hand_landmarks[right_index], frame_n = frame_n, side = 'Right')
+            _get_single_hand_detail(hand_landmarks[left_index], frame_n = frame_n, side = 'Left')
+            _get_single_hand_detail(hand_landmarks[right_index], frame_n = frame_n, side = 'Right')
     
     if len(hand_landmarks) == 1:
         side = handedness[0][0].category_name
@@ -150,22 +151,22 @@ def get_hand_detail(detect_hand, frame_n = 0, left_palm = None, right_palm = Non
         
         if side == 'Right':  
             if distance_r_h/distance_l_h > MIN_DISTANCE_DIFF: # Spot the different
-                get_single_hand_detail(hand_landmarks[0], frame_n = frame_n, side = 'Left')
-                get_single_hand_detail([NullPoint() for _ in range(20)], frame_n = frame_n, side = 'Right')
+                _get_single_hand_detail(hand_landmarks[0], frame_n = frame_n, side = 'Left')
+                _get_single_hand_detail([NullPoint() for _ in range(20)], frame_n = frame_n, side = 'Right')
             else:
-                get_single_hand_detail([NullPoint() for _ in range(20)], frame_n = frame_n, side = 'Left')
-                get_single_hand_detail(hand_landmarks[0], frame_n = frame_n, side = 'Right')
+                _get_single_hand_detail([NullPoint() for _ in range(20)], frame_n = frame_n, side = 'Left')
+                _get_single_hand_detail(hand_landmarks[0], frame_n = frame_n, side = 'Right')
                 
         else:
             if distance_l_h/distance_r_h > MIN_DISTANCE_DIFF: # Spot the different
-                get_single_hand_detail([NullPoint() for _ in range(20)], frame_n = frame_n, side = 'Left')
-                get_single_hand_detail(hand_landmarks[0], frame_n = frame_n, side = 'Right')
+                _get_single_hand_detail([NullPoint() for _ in range(20)], frame_n = frame_n, side = 'Left')
+                _get_single_hand_detail(hand_landmarks[0], frame_n = frame_n, side = 'Right')
             else:
-                get_single_hand_detail(hand_landmarks[0], frame_n = frame_n, side = 'Left')
-                get_single_hand_detail([NullPoint() for _ in range(20)], frame_n = frame_n, side = 'Right')
+                _get_single_hand_detail(hand_landmarks[0], frame_n = frame_n, side = 'Left')
+                _get_single_hand_detail([NullPoint() for _ in range(20)], frame_n = frame_n, side = 'Right')
                 
 
-def get_single_pose_detail(pose_landmarks, position, part, frame_n = 0):
+def _get_single_pose_detail(pose_landmarks, position, part, frame_n = 0):
     
     """
         Fill the data of specific body part landmarks
@@ -177,7 +178,7 @@ def get_single_pose_detail(pose_landmarks, position, part, frame_n = 0):
         x.append(np.float32(pose_landmarks[0][pos].x))
         y.append(np.float32(pose_landmarks[0][pos].y))
 
-def get_pose_detail(detect_pose, frame_n = 0): # return left palm and right palm
+def _get_pose_detail(detect_pose, frame_n = 0): # return left palm and right palm
     """
         Get coodinate of body part from left to right
         
@@ -187,10 +188,10 @@ def get_pose_detail(detect_pose, frame_n = 0): # return left palm and right palm
     pose_landmarks = detect_pose.pose_landmarks
     if pose_landmarks:
         
-        get_single_pose_detail(pose_landmarks, LEFT_HEAD,  'left_head',  frame_n)
-        get_single_pose_detail(pose_landmarks, RIGHT_HEAD, 'right_head', frame_n)
-        get_single_pose_detail(pose_landmarks, LEFT_ARM,  'left_arm',  frame_n)
-        get_single_pose_detail(pose_landmarks, RIGHT_ARM, 'right_arm', frame_n)
+        _get_single_pose_detail(pose_landmarks, LEFT_HEAD,  'left_head',  frame_n)
+        _get_single_pose_detail(pose_landmarks, RIGHT_HEAD, 'right_head', frame_n)
+        _get_single_pose_detail(pose_landmarks, LEFT_ARM,  'left_arm',  frame_n)
+        _get_single_pose_detail(pose_landmarks, RIGHT_ARM, 'right_arm', frame_n)
             
         left_palm  = (pose_landmarks[0][16], pose_landmarks[0][18], pose_landmarks[0][20])
         right_palm = (pose_landmarks[0][15], pose_landmarks[0][17], pose_landmarks[0][19])
@@ -198,10 +199,10 @@ def get_pose_detail(detect_pose, frame_n = 0): # return left palm and right palm
         return left_palm, right_palm
     else:
         pose_landmarks = [[NullPoint() for _ in range(25)]]
-        get_single_pose_detail(pose_landmarks, LEFT_HEAD,  'left_head',  frame_n)
-        get_single_pose_detail(pose_landmarks, RIGHT_HEAD, 'right_head', frame_n)
-        get_single_pose_detail(pose_landmarks, LEFT_ARM,  'left_arm',  frame_n)
-        get_single_pose_detail(pose_landmarks, RIGHT_ARM, 'right_arm', frame_n)
+        _get_single_pose_detail(pose_landmarks, LEFT_HEAD,  'left_head',  frame_n)
+        _get_single_pose_detail(pose_landmarks, RIGHT_HEAD, 'right_head', frame_n)
+        _get_single_pose_detail(pose_landmarks, LEFT_ARM,  'left_arm',  frame_n)
+        _get_single_pose_detail(pose_landmarks, RIGHT_ARM, 'right_arm', frame_n)
         
         return None, None
     
@@ -255,8 +256,8 @@ def tracking_an_image(pose_detector, hand_detector,image, image_file = None):
     detection_pose = pose_detector.detect(image)
     detection_hand = hand_detector.detect(image)
 
-    left_palm, right_palm = get_pose_detail(detection_pose)
-    get_hand_detail(detection_hand, left_palm = left_palm, right_palm = right_palm)
+    left_palm, right_palm = _get_pose_detail(detection_pose)
+    _get_hand_detail(detection_hand, left_palm = left_palm, right_palm = right_palm)
     
     return image, detection_hand, detection_pose
 
@@ -291,8 +292,8 @@ def tracking_a_video(pose_detector, hand_detector, video, video_file = None):
         detection_pose = pose_detector.detect(image)
         detection_hand = hand_detector.detect(image)
 
-        left_palm, right_palm = get_pose_detail(detection_pose, frame_n=frame_n)
-        get_hand_detail(detection_hand, left_palm = left_palm, right_palm = right_palm, frame_n=frame_n)
+        left_palm, right_palm = _get_pose_detail(detection_pose, frame_n=frame_n)
+        _get_hand_detail(detection_hand, left_palm = left_palm, right_palm = right_palm, frame_n=frame_n)
         
         detection_hands.append(detection_hand)
         detection_poses.append(detection_pose)
@@ -306,7 +307,17 @@ def tracking_a_video(pose_detector, hand_detector, video, video_file = None):
 
 
 def detect_image(image = None, pose_detector = None, hand_detector = None, image_file = None, draw = False):
+    """
+    This function will detect hand and pose from an image
+    Parameter:
+    - `image`: image mp object
+    - `image_file`: directory of image
+    - `pose_detector`: pose_detection model. If None then load a new model
+    - `hand_detector`: hand_detection model. If None then load a new model
+    - `draw`: create image output with detection on it
     
+    return: pd.Dataframe: the data for hand detection
+    """
     assert image != None or image_file != None
 
     if not pose_detector:
@@ -349,13 +360,27 @@ def detect_image(image = None, pose_detector = None, hand_detector = None, image
     print("DETECTED")
     
     if draw:
+        if image_file:
+            destination = "track/"+image_file
+        else:
+            destination = "track/random.jpg"
         annotated_image = draw_landmarks_on_image(image.numpy_view(), detection_pose)
         annotated_image = draw_landmarks_on_image(annotated_image, detection_hand, mode = "hand")
-        cv2.imwrite(DESTINATION, annotated_image)
+        cv2.imwrite(destination, annotated_image)
     return df
 
 def detect_video(video = None, pose_detector = None, hand_detector = None, video_file = None, vis = False):
+    """
+    This function will detect hand and pose from a video
+    Parameter:
+    - `video`: video cv2 object
+    - `video_file`: directory of video
+    - `pose_detector`: pose_detection model. If None then load a new model
+    - `hand_detector`: hand_detection model. If None then load a new model
+    - `draw`: create a video output with detection on it
     
+    return: pd.Dataframe: the data for hand detection
+    """
     assert video != None or video_file != None
 
     if not pose_detector:
@@ -401,6 +426,7 @@ def detect_video(video = None, pose_detector = None, hand_detector = None, video
         else:
             destination = "track/random.mp4"
         
+        # This gonna need more if-else for file format
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # For MP4 codec
         out = cv2.VideoWriter(destination, fourcc, video_data['fps'], (video_data['width'], video_data['height']))
             
@@ -418,5 +444,5 @@ def detect_video(video = None, pose_detector = None, hand_detector = None, video
 
 if __name__ == "__main__":
     df = detect_video(video_file="videos/cc.mp4", vis=True)
-    df.to_csv(RECORD)
+    df.to_csv('record/cc1.csv')
 # 
