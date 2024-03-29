@@ -318,6 +318,13 @@ def detect_image(image = None, pose_detector = None, hand_detector = None, image
     
     return: pd.Dataframe: the data for hand detection
     """
+    
+    global frame
+    global type_
+    global index
+    global x
+    global y
+    
     assert image != None or image_file != None
 
     if not pose_detector:
@@ -342,7 +349,7 @@ def detect_image(image = None, pose_detector = None, hand_detector = None, image
 
     # STEP 3: Load the input image.
     image, detection_hand, detection_pose = tracking_an_image(pose_detector, hand_detector, image = image, image_file = image_file)
-
+    type_ = [x.lower() for x in type_]
 
     df = pd.DataFrame({
                 "frame": frame, 
@@ -381,6 +388,13 @@ def detect_video(video = None, pose_detector = None, hand_detector = None, video
     
     return: pd.Dataframe: the data for hand detection
     """
+    
+    global frame
+    global type_
+    global index
+    global x
+    global y
+    
     assert video != None or video_file != None
 
     if not pose_detector:
@@ -405,7 +419,7 @@ def detect_video(video = None, pose_detector = None, hand_detector = None, video
 
     # STEP 3: Load the input image.
     video_data, images, detection_hands, detection_poses = tracking_a_video(pose_detector, hand_detector, video = video, video_file = video_file)
-
+    type_ = [x.lower() for x in type_]
     df = pd.DataFrame({
                 "frame": frame, 
                 "type": type_, 
