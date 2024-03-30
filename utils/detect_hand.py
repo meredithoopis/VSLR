@@ -458,5 +458,4 @@ def detect_video(video = None, pose_detector = None, hand_detector = None, video
 
 if __name__ == "__main__":
     df = detect_video(video_file="videos/cc.mp4", vis=True)
-    df.to_csv('record/cc1.csv')
-# 
+    df.to_csv('record/cc.csv')
