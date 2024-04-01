@@ -11,7 +11,7 @@ class DataAugmenter:
         self.df = pd.read_csv(filepath)
         self.coords = self.df[['x', 'y']].fillna(0)
         self.coords = self.df[['x', 'y']].to_numpy()
-        self.mask = (self.df['x'] != 0) & (self.df['y'] != 0)
+        self.mask = (self.df['x'] != np.nan) & (self.df['y'] != np.nan)
     
     def flip(self): 
         mapping = {"right_head": "left_head", 
@@ -21,6 +21,9 @@ class DataAugmenter:
                    "Left_hand": "Right_hand", 
                    "left_arm": "right_arm"
                    }
+        
+        
+        
         mask = self.df['type'].isin(mapping.keys())
         self.df.loc[mask & self.mask, 'x'] = 1 -self.df.loc[mask & self.mask, 'x']
         self.df.loc[mask, 'type'] = self.df.loc[mask, 'type'].map(mapping)
@@ -39,7 +42,7 @@ class DataAugmenter:
         self.df = new_df.sort_values(by=['type'])
         self.coords = self.df[['x', 'y']].to_numpy()'''
     
-    def add_noise(self, noise_range = (0, 0.005)):
+    def add_noise(self, noise_range = (0, 0.01)):
         noise = np.random.normal(*noise_range, size = self.coords.shape)
         self.coords[self.mask] += noise[self.mask]
 
