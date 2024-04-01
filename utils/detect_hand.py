@@ -469,6 +469,7 @@ def detect_video(video = None, pose_detector = None, hand_detector = None, video
     
 
 if __name__ == "__main__":
+
     df = detect_image(image_file="images/half.jpg", vis=True)
     df.to_csv('record/half.csv')
-# 
+
