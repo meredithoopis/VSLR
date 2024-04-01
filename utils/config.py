@@ -8,11 +8,13 @@ RIGHT_HEAD = [0, 4, 5, 6, 8, 10]
 LEFT_ARM   = [11, 13, 15, 17, 19, 21, 23]
 RIGHT_ARM  = [12, 14, 16, 18, 20, 22, 24]
 
+
+import numpy as np
 class NullPoint:
     def __init__(self) -> None:
-        self.x = None
-        self.y = None
-        self.z = None
+        self.x = np.nan
+        self.y = np.nan
+        self.z = np.nan
     
     def __str__(self):
         return "Null tracking object"

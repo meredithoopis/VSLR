@@ -8,7 +8,7 @@ import cv2
 import pandas as pd
 
 from config import *
-from functions import average_pose_to_hand_distance
+from functions import average_pose_to_hand_distance, normalize_ignore_nan
 
 # `NullPoint` is a class with 2 attribute `x`, `y` which have null value
 
@@ -39,15 +39,15 @@ def _not_handedness(frame_n = 0, side = 'both'):
         frame.append(frame_n)
         type_.append("Left_hand")
         index.append(i)
-        x.append(None)
-        y.append(None)
+        x.append(np.nan)
+        y.append(np.nan)
     
     for i in range(21):
         frame.append(frame_n)
         type_.append("Right_hand")
         index.append(i)
-        x.append(None)
-        y.append(None)
+        x.append(np.nan)
+        y.append(np.nan)
         
 def _get_single_hand_detail(landmarks, frame_n = 0, side='Left'):
     part = side + '_hand'
@@ -55,8 +55,14 @@ def _get_single_hand_detail(landmarks, frame_n = 0, side='Left'):
         frame.append(frame_n)
         type_.append(part)
         index.append(i)
-        x.append(np.float32(val.x))
-        y.append(np.float32(val.y))
+        if val.x and val.y and \
+            val.x <= 1 and val.y <= 1:
+                
+            x.append(np.float32(val.x))
+            y.append(np.float32(val.y))
+        else:
+            x.append(np.nan)
+            y.append(np.nan)
         
 
 
@@ -124,7 +130,7 @@ def _get_hand_detail(detect_hand, frame_n = 0, left_palm = None, right_palm = No
         If the distance of the hand cross a certain threshold, it will swap hands
         
         With 1 hand, I will calculate the distance of that hand to 2 palms, and if 
-        it crosses the threshold, it will be swaped from left to right and vice versa.
+        it crosses the threshold, it will be swapped from left to right and vice versa.
     """
     
     if len(hand_landmarks) == 2:  
@@ -175,14 +181,20 @@ def _get_single_pose_detail(pose_landmarks, position, part, frame_n = 0):
         frame.append(frame_n)
         type_.append(part)
         index.append(pos)
-        x.append(np.float32(pose_landmarks[0][pos].x))
-        y.append(np.float32(pose_landmarks[0][pos].y))
+        if pose_landmarks[0][pos].x and pose_landmarks[0][pos].y and \
+            pose_landmarks[0][pos].x <=1 and pose_landmarks[0][pos].y <=1:
+                
+            x.append(np.float32(pose_landmarks[0][pos].x))
+            y.append(np.float32(pose_landmarks[0][pos].y))
+        else:
+            x.append(np.nan)
+            y.append(np.nan)
 
 def _get_pose_detail(detect_pose, frame_n = 0): # return left palm and right palm
     """
-        Get coodinate of body part from left to right
+        Get coordinate of body part from left to right
         
-        If body is detected, return coodinate of left palm and right palm
+        If body is detected, return coordinate of left palm and right palm
         else return None, None
     """
     pose_landmarks = detect_pose.pose_landmarks
@@ -227,7 +239,7 @@ def draw_landmarks_on_image(rgb_image, detection_result, mode = "pose"):
         # Draw the pose landmarks.
         pose_landmarks_proto = landmark_pb2.NormalizedLandmarkList()
         pose_landmarks_proto.landmark.extend([
-        landmark_pb2.NormalizedLandmark(x=landmark.x, y=landmark.y, z=landmark.z) for landmark in pose_landmarks
+            landmark_pb2.NormalizedLandmark(x=landmark.x, y=landmark.y, z=landmark.z) for landmark in pose_landmarks
         ])
         if mode == "pose":
             solutions.drawing_utils.draw_landmarks(
@@ -306,7 +318,7 @@ def tracking_a_video(pose_detector, hand_detector, video, video_file = None):
     return video_data, images, detection_hands, detection_poses
 
 
-def detect_image(image = None, pose_detector = None, hand_detector = None, image_file = None, draw = False):
+def detect_image(image = None, pose_detector = None, hand_detector = None, image_file = None, vis = False):
     """
     This function will detect hand and pose from an image
     Parameter:
@@ -355,8 +367,8 @@ def detect_image(image = None, pose_detector = None, hand_detector = None, image
                 "frame": frame, 
                 "type": type_, 
                 "index": index, 
-                "x": x, 
-                "y": y
+                "x": normalize_ignore_nan(x), 
+                "y": normalize_ignore_nan(y)
                 #"z": z
             })
 
@@ -366,13 +378,14 @@ def detect_image(image = None, pose_detector = None, hand_detector = None, image
 
     print("DETECTED")
     
-    if draw:
+    if vis:
         if image_file:
             destination = "track/"+image_file
         else:
-            destination = "track/random.jpg"
+            destination = "track/images/random.jpg"
         annotated_image = draw_landmarks_on_image(image.numpy_view(), detection_pose)
         annotated_image = draw_landmarks_on_image(annotated_image, detection_hand, mode = "hand")
+        
         cv2.imwrite(destination, annotated_image)
     return df
 
@@ -424,9 +437,9 @@ def detect_video(video = None, pose_detector = None, hand_detector = None, video
                 "frame": frame, 
                 "type": type_, 
                 "index": index, 
-                "x": x, 
-                "y": y
-                #"z": z
+                "x": normalize_ignore_nan(x), 
+                "y": normalize_ignore_nan(y)
+                
             })
 
 
@@ -438,7 +451,7 @@ def detect_video(video = None, pose_detector = None, hand_detector = None, video
         if video_file:
             destination = "track/"+video_file
         else:
-            destination = "track/random.mp4"
+            destination = "track/videos/random.mp4"
         
         # This gonna need more if-else for file format
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # For MP4 codec
@@ -450,12 +463,13 @@ def detect_video(video = None, pose_detector = None, hand_detector = None, video
             out.write(annotated_image)
             
         out.release()
-         
         
     
     return df
     
 
 if __name__ == "__main__":
-    df = detect_video(video_file="videos/cc.mp4", vis=True)
-    df.to_csv('record/cc.csv')
+
+    df = detect_image(image_file="images/half.jpg", vis=True)
+    df.to_csv('record/half.csv')
+
