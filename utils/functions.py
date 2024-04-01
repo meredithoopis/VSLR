@@ -21,7 +21,7 @@ def normalize_ignore_nan(ar):
     index = []
     
     for i, a in enumerate(arr):
-        if a:
+        if not np.isnan(a):
             value.append(a)
             index.append(i)
     
@@ -32,5 +32,10 @@ def normalize_ignore_nan(ar):
     value = (value - mean)/std
     
     arr[index] = value
-    
+
     return arr
+
+if __name__ == "__main__":
+    arr = np.array([1,2,np.nan,2,1])
+    print(arr)
+    print(normalize_ignore_nan(arr))

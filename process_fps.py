@@ -75,6 +75,7 @@ def reduce_fps(input_path, target_fps):
 if __name__ == "__main__":
     # show('videos/cc.mp4')
     # reduce_fps('videos/cc1_reduced_10.mp4', 60)
-    print(get_fps('videos/cc1.mp4'))
+    # print(get_fps('videos/cc1.mp4'))
+    print("Process_FPS")
 
 
