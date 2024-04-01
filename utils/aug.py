@@ -36,6 +36,7 @@ class DataAugmenter:
         
         self.df.loc[self.mask, 'x'] = - self.df.loc[self.mask, 'x']
         self.df.loc['type'] = self.df.loc['type'].map(mapping)
+
         self.coords = self.df[['x', 'y']].to_numpy()
         
         self._save("flip")
