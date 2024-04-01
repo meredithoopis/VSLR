@@ -21,7 +21,7 @@ def get_fps(video_path):
     video_cap = cv2.VideoCapture(video_path)
     if not video_cap.isOpened(): 
         raise Exception("Not able to open the video")
-        return 
+        
     fps = video_cap.get(cv2.CAP_PROP_FPS)
     video_cap.release()
     return fps 

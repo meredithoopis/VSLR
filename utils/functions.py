@@ -14,3 +14,23 @@ def average_pose_to_hand_distance(palms, hands):
                                               hand.y))
     
     return np.mean(distances)
+
+def normalize_ignore_nan(ar):
+    arr = np.array(ar)
+    value = []
+    index = []
+    
+    for i, a in enumerate(arr):
+        if a:
+            value.append(a)
+            index.append(i)
+    
+    value = np.array(value)
+    mean = np.mean(value)
+    std = np.std(value)
+    
+    value = (value - mean)/std
+    
+    arr[index] = value
+    
+    return arr
