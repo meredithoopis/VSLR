@@ -6,7 +6,7 @@ from functions import normalize_ignore_nan
 
 
 class DataAugmenter: 
-    def __init__(self, filepath, outfolder = None): 
+    def __init__(self, filepath, outfolder = None, crop_frame=True): 
         if outfolder:
             self.outfolder = outfolder
         else:
@@ -14,6 +14,10 @@ class DataAugmenter:
         self.filename = filepath.split('/')[-1]
         
         self.df = pd.read_csv(filepath)
+        if crop_frame: 
+            crop_start, crop_end = 3,3
+            self.df = self.df[crop_start:-crop_end]
+        
         self.coords = self.df[['x', 'y']].fillna(0)
         self.coords = self.df[['x', 'y']].to_numpy()
         self.mask = (self.df['x'] != 0) & (self.df['y'] != 0)
@@ -121,8 +125,7 @@ class DataAugmenter:
         self.renormalize()
         
         self._save("full_pipeline_center_crop")
-        
-
+    
     def _save(self, dir, data = None, task = ''):
         df_augmented = self.df.copy()
         df_augmented[['x', 'y']] = self.coords
