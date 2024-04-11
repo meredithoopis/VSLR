@@ -25,3 +25,14 @@ def get_fps(video_path):
     fps = video_cap.get(cv2.CAP_PROP_FPS)
     video_cap.release()
     return fps 
+
+def get_duration(video_path): 
+    video_cap = cv2.VideoCapture(video_path)
+    if not video_cap.isOpened(): 
+        raise Exception("Not able to open the video")
+        
+    fps = video_cap.get(cv2.CAP_PROP_FPS)
+    totalNoFrames = video_cap.get(cv2.CAP_PROP_FRAME_COUNT)
+    durationInSeconds = totalNoFrames // fps
+    video_cap.release()
+    return durationInSeconds
