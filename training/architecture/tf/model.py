@@ -1,6 +1,7 @@
 from efficientnet import MBBlock
 from transformer import TransformerBlock
 import tensorflow as tf
+import time
 
 CHANNELS = 66
 PAD = -100
@@ -31,6 +32,12 @@ def get_model(max_len=64, dim=192 ):
     return tf.keras.Model(inp, x)
 
 if __name__ == "__main__":
-    x = tf.random.normal((32, 100, 66))
+    x = tf.random.normal((32, 64, 66))
     model = get_model()
     model.summary()
+    y = model(x)
+    start = time.time()
+    y = model(x)
+    end = time.time()
+    print("TF model time: ", end-start)
+    # print(y.shape)
