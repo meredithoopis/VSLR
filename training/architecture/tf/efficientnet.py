@@ -1,12 +1,12 @@
 import tensorflow as tf 
 import tensorflow.keras.layers as layers
 
-class ECA(layers.Layer):
+class ECA(layers.Layer): #Efficient channel attention module 
     def __init__(self, kernel_size=5, **kwargs):
         super().__init__(**kwargs)
         self.supports_masking = True
         self.kernel_size = kernel_size
-        self.conv = layers.Conv1D(1, kernel_size=kernel_size, strides=1, padding="same", use_bias=False)
+        self.conv = layers.Conv1D(1, kernel_size=kernel_size, strides=1, padding="same", use_bias=False)  #output channel 1, add zero padding 
 
     def call(self, inputs, mask=None):
         nn = layers.GlobalAveragePooling1D()(inputs, mask=mask)
@@ -14,14 +14,14 @@ class ECA(layers.Layer):
         nn = self.conv(nn)
         nn = tf.squeeze(nn, -1)
         nn = tf.nn.sigmoid(nn)
-        nn = nn[:,None,:]
+        nn = nn[:,None,:] #(batch, 1, features)
         return inputs * nn
     
-class SE(layers.Layer):
+class SE(layers.Layer): #Squeeze execution layer 
     def __init__(self, kernel_size=5, **kwargs):
         super().__init__(**kwargs)
 
-class CausalDWConv1D(layers.Layer):
+class CausalDWConv1D(layers.Layer): #Causal depthwise convolution1D 
     def __init__(self, 
         kernel_size=15,
         dilation_rate=1,
@@ -52,13 +52,13 @@ def MBBlock(channel_size,
           drop_rate=0.0,
           expand_ratio=2,
           activation='swish',
-          name=None):
+          name=None): #Mobile inverted bottleneck 
 
     if name is None:
         name = str(tf.keras.backend.get_uid("mblock"))
     # Expansion phase
     def apply(inputs):
-        channels_in = tf.keras.backend.int_shape(inputs)[-1]
+        channels_in = tf.keras.backend.int_shape(inputs)[-1] #Get number of channels 
         channels_expand = channels_in * expand_ratio
 
         skip = inputs
@@ -88,7 +88,7 @@ def MBBlock(channel_size,
             x = tf.keras.layers.Dropout(drop_rate, noise_shape=(None,1,1), name=name + '_drop')(x)
 
         if (channels_in == channel_size):
-            x = tf.keras.layers.add([x, skip], name=name + '_add')
+            x = tf.keras.layers.add([x, skip], name=name + '_add') #Residual connection 
         return x
 
     return apply
