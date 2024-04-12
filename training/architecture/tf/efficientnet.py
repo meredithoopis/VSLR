@@ -104,4 +104,5 @@ if __name__ == "__main__":
     start = time.time()
     model(x)
     end = time.time()
+    print(model(x))
     print('time for tf',end-start)
