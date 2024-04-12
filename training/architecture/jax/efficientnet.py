@@ -10,7 +10,7 @@ import time
 
 
 #https://flax.readthedocs.io/en/latest/_modules/flax/linen/attention.html
-
+#https://flax.readthedocs.io/en/latest/api_reference/flax.errors.html#flax.errors.InvalidRngError
 
 class ECA(nn.Module): #Efficient channel attention 
     kernel_size: int = 5 
@@ -60,7 +60,7 @@ class CausalDWConv1D(nn.Module): #Causal depth wise convolution
 def MBBlock(channel_size, kernel_size, dilation_rate = 1, 
             drop_rate = 0, expand_ratio= 2, 
             activation = jax.nn.swish, name=None): 
-    class MBBlock(nn.Module): 
+    class MBBLock(nn.Module): 
         def setup(self): 
             self.dense1 = nn.Dense(features=channel_size * expand_ratio, kernel_init= initializers.zeros, use_bias = True) 
             self.dwconv = CausalDWConv1D(kernel_size = kernel_size, dilation_rate = dilation_rate)
@@ -69,22 +69,23 @@ def MBBlock(channel_size, kernel_size, dilation_rate = 1,
             self.dense2 = nn.Dense(features = channel_size, kernel_init = initializers.zeros, use_bias = True)
             self.dropout = nn.Dropout(rate = drop_rate)
 
-        def __call__(self, inputs): 
+        def __call__(self, inputs,*, deterministic=False, rng= None): 
             channels_in = inputs.shape[-1]
             channels_expand = channels_in * expand_ratio 
             skip = inputs 
             x = self.dense1(inputs)
             x = activation(x)
             x = self.dwconv(x)
-            x = self.norm(x)
+            x = self.norm(x, use_running_average=deterministic)
             x = self.eca(x)
             x = self.dense2(x)
             if drop_rate > 0: 
-                x = self.dropout(x)
+                #x = self.dropout(x, deterministic=deterministic, rng = self.make_rng('dropout'))
+                x = self.dropout(x, deterministic=deterministic, rng=rng)
             if channels_in == channel_size: 
                 x = x + skip 
             return x 
-    return MBBlock 
+    return MBBLock()
 
 
 if __name__ == "__main__": 

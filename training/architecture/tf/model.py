@@ -40,4 +40,4 @@ if __name__ == "__main__":
     y = model(x)
     end = time.time()
     print("TF model time: ", end-start)
-    # print(y.shape)
+    print(y.shape)
