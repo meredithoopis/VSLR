@@ -34,7 +34,7 @@ class ECA(nn.Module):
         return x * y
 
 class MBBlock(nn.Module):
-    def __init__(self,input_dim, output_dim, ratio, kernel_size = 15, stride = 1, dropout=0.2, squeeze_type = 'ECA') -> None:
+    def __init__(self, input_dim, output_dim, ratio, kernel_size = 15, stride = 1, dropout=0.2, squeeze_type = 'ECA') -> None:
         super().__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
@@ -52,6 +52,7 @@ class MBBlock(nn.Module):
             )    
         block.append(conv1)
         
+        # Choose Squeeze and Execute method
         if squeeze_type == 'ECA':  
             seblock = ECA(self.hidden_dim)
         else:
