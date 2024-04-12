@@ -5,7 +5,7 @@ import torch.nn.functional as F
 class SelfAttention(nn.Module):
     def __init__(self, dim) -> None:
         super().__init__()
-        self.att = nn.MultiheadAttention(dim,8,0.2)
+        self.att = nn.MultiheadAttention(dim,4,0.2)
         self.w_q = nn.Linear(dim,dim)
         self.w_k = nn.Linear(dim,dim)
         self.w_v = nn.Linear(dim,dim)

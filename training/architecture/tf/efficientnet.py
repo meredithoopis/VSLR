@@ -1,7 +1,7 @@
 import tensorflow as tf 
 import tensorflow.keras.layers as layers
-
-class ECA(layers.Layer): #Efficient channel attention module 
+import time
+class ECA(layers.Layer):
     def __init__(self, kernel_size=5, **kwargs):
         super().__init__(**kwargs)
         self.supports_masking = True
@@ -10,11 +10,15 @@ class ECA(layers.Layer): #Efficient channel attention module
 
     def call(self, inputs, mask=None):
         nn = layers.GlobalAveragePooling1D()(inputs, mask=mask)
+        
         nn = tf.expand_dims(nn, -1)
+
         nn = self.conv(nn)
+
         nn = tf.squeeze(nn, -1)
         nn = tf.nn.sigmoid(nn)
-        nn = nn[:,None,:] #(batch, 1, features)
+        nn = nn[:,None,:]
+
         return inputs * nn
     
 class SE(layers.Layer): #Squeeze execution layer 
@@ -92,3 +96,12 @@ def MBBlock(channel_size,
         return x
 
     return apply
+
+if __name__ == "__main__":
+    model = ECA()
+    x = tf.random.normal((32, 100, 66))
+    model(x)
+    start = time.time()
+    model(x)
+    end = time.time()
+    print('time for tf',end-start)
