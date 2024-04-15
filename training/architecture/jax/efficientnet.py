@@ -31,7 +31,7 @@ class SE(nn.Module):
         self.avg_pool = nn.avg_pool 
         self.fc1 = nn.DenseGeneral
         self.fc2 = nn.DenseGeneral
-    
+    #@jax.jit
     def __call__(self, x): 
         bs, h, w, channels = x.shape 
         #se = jnp.mean(x,axis = (1,2), keepdims=True)
@@ -68,7 +68,7 @@ def MBBlock(channel_size, kernel_size, dilation_rate = 1,
             self.eca = ECA()
             self.dense2 = nn.Dense(features = channel_size, kernel_init = initializers.zeros, use_bias = True)
             self.dropout = nn.Dropout(rate = drop_rate)
-
+        #jax.jit
         def __call__(self, inputs,*, deterministic=False, rng= None): 
             channels_in = inputs.shape[-1]
             channels_expand = channels_in * expand_ratio 
@@ -94,7 +94,9 @@ if __name__ == "__main__":
     model = ECA()
     params = model.init(key, x)
     start = time.time()
-    y = model.apply(params,x)
+    jit_model_apply = jax.jit(model.apply)
+    y = jit_model_apply(params,x)
+    #y = model.apply(params,x)
     end = time.time()
     print(y.shape)
-    print('Time for jax', end-start)
+    print('Time for jax', end-start) #0.0285

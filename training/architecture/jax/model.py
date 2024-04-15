@@ -5,6 +5,7 @@ from flax.linen import initializers
 from jax import random
 import time
 import jax.numpy as jnp
+import jax 
 
 CHANNELS = 66
 PAD = -100
@@ -57,8 +58,14 @@ if __name__ == "__main__":
     params = variables['params']
     batch_stats = variables['batch_stats']
     y = model.apply({'params': params, 'batch_stats': batch_stats}, x, rngs={'dropout': random.PRNGKey(0)}, mutable=['batch_stats'])
+    
+    @jax.jit 
+    def jit_model_apply(params,batch_stats,x,rng): 
+        return model.apply({'params': params, 'batch_stats': batch_stats}, x, rngs={'dropout': rng}, mutable=['batch_stats'])
+
     start = time.time()
-    y, updated_stats = model.apply({'params': params, 'batch_stats': batch_stats}, x, rngs={'dropout': random.PRNGKey(0)}, mutable=['batch_stats'])
+    #y, updated_stats = model.apply({'params': params, 'batch_stats': batch_stats}, x, rngs={'dropout': random.PRNGKey(0)}, mutable=['batch_stats'])
+    y, updated_stats = jit_model_apply(params,batch_stats,x,random.PRNGKey(0))
     end = time.time()
     print("JAX model time: ", end-start)
     print(y.shape)

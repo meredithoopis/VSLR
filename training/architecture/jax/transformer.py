@@ -19,7 +19,7 @@ class SelfAttention(nn.Module):
         self.w_q = nn.Dense(self.dim)
         self.w_k = nn.Dense(self.dim)
         self.w_v = nn.Dense(self.dim)
-    
+
     def __call__(self,x,padding_mask = None): 
         b, n, _ = x.shape 
         q = self.w_q(x).reshape((b,n, self.num_heads, self.head_dim)).transpose((0,2,1,3))
@@ -45,7 +45,6 @@ class TransformerBlock(nn.Module):
         self.dense2 = nn.Dense(self.dim)
         self.dropout1 = nn.Dropout(rate=0.1)
         self.dropout2 = nn.Dropout(rate=0.2)
-    
     def __call__(self, x, padding_mask=None, deterministic=False, rngs = None):
         if rngs is None: 
             rngs = {'dropout': self.make_rng('dropout')}
@@ -70,7 +69,6 @@ class Transformer(nn.Module):
 
     def setup(self):
         self.blocks = [TransformerBlock(self.hidden_dim, self.num_heads) for _ in range(self.num_blocks)]
-
     def __call__(self, x, padding_mask=None, deterministic = False, rngs = None):
         if rngs is None: 
             rngs = {'dropout': self.make_rng('dropout')}
@@ -86,8 +84,13 @@ if __name__ == "__main__":
     rng = random.PRNGKey(0)
     x = random.normal(rng, (1, 10, 64))  #sqq length 10, hidden dim 64 
     variables = model.init(rng,x)
+    #jit_model_apply = jax.jit(model.apply, static_argnums=(2,3)) #Dont jit-compile rng and deterministic (error)
     params = variables['params']
-    y, _ = model.apply({'params':params}, x, deterministic= True, rngs={'dropout': rng})
+    @jax.jit 
+    def jit_model_apply(params,x,rng): 
+        return model.apply({'params':params}, x, deterministic= True, rngs={'dropout': rng})
+    y, _ = jit_model_apply(params,x,rng) 
+    #y, _ = model.apply({'params':params}, x, deterministic= True, rngs={'dropout': rng})
 
     print(y.shape)
     
