@@ -45,8 +45,8 @@ class EfficentGRU(EfficentX):
     
 import time    
 if __name__ == '__main__':
-    model = EfficentTransformer(66, 192, 10)
-    x = torch.randn(32, 100, 66)
+    model = EfficentTransformer(132, 192, 10)
+    x = torch.randn(32, 100, 132)
     y = model(x)
     print(y.size())
     print("EfficentTransformer parameters", sum(p.numel() for p in model.parameters()))
@@ -55,8 +55,8 @@ if __name__ == '__main__':
     end = time.time()
     print("Running time:", end-start)
     
-    model = EfficentLSTM(100, 192, 10)
-    x = torch.randn(32, 100, 100)
+    model = EfficentLSTM(132, 192, 10)
+    x = torch.randn(32, 100, 132)
     y = model(x)
     print(y.size())
     print("EfficentLSTM parameters", sum(p.numel() for p in model.parameters()))
@@ -65,8 +65,8 @@ if __name__ == '__main__':
     end = time.time()
     print("Running time:", end-start)
     
-    model = EfficentGRU(100, 192, 10)
-    x = torch.randn(32, 100, 100)
+    model = EfficentGRU(132, 192, 10)
+    x = torch.randn(32, 100, 132)
     y = model(x)
     print(y.size())
     print("EfficentGRU parameters", sum(p.numel() for p in model.parameters()))

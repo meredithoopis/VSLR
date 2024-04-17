@@ -51,12 +51,12 @@ class CausalDWConv1D(layers.Layer): #Causal depthwise convolution1D
     
     
 def MBBlock(channel_size,
-          kernel_size,
-          dilation_rate=1,
-          drop_rate=0.0,
-          expand_ratio=2,
-          activation='swish',
-          name=None): #Mobile inverted bottleneck 
+            kernel_size,
+            dilation_rate=1,
+            drop_rate=0.0,
+            expand_ratio=2,
+            activation='swish',
+            name=None): #Mobile inverted bottleneck 
 
     if name is None:
         name = str(tf.keras.backend.get_uid("mblock"))
@@ -98,8 +98,12 @@ def MBBlock(channel_size,
     return apply
 
 if __name__ == "__main__":
-    model = ECA()
-    x = tf.random.normal((32, 100, 66))
+    x = tf.random.normal((32, 64, 192))
+    
+    inp = tf.keras.Input((64,192))
+    y = MBBlock(192,17)(inp)
+    model = tf.keras.Model(inp, y)
+    model.summary()
     model(x)
     start = time.time()
     model(x)
