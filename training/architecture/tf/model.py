@@ -3,7 +3,7 @@ from transformer import TransformerBlock
 import tensorflow as tf
 import time
 
-CHANNELS = 66
+CHANNELS = 132
 PAD = -100
 NUM_CLASSES = 250
 
@@ -12,7 +12,7 @@ def get_model(max_len=64, dim=192 ):
     inp = tf.keras.Input((max_len,CHANNELS))
     x = tf.keras.layers.Masking(mask_value=PAD,input_shape=(max_len,CHANNELS))(inp)
     ksize = 17
-    x = tf.keras.layers.Dense(dim, use_bias=False,name='stem_conv')(x)
+    x = tf.keras.layers.Dense(dim, use_bias=False,name='stem_conv')(inp)
     x = tf.keras.layers.BatchNormalization(momentum=0.95,name='stem_bn')(x)
 
     x = MBBlock(dim,ksize,drop_rate=0.2)(x)
@@ -32,7 +32,7 @@ def get_model(max_len=64, dim=192 ):
     return tf.keras.Model(inp, x)
 
 if __name__ == "__main__":
-    x = tf.random.normal((32, 64, 66))
+    x = tf.random.normal((32, 64, 132))
     model = get_model()
     model.summary()
     y = model(x)
@@ -40,4 +40,4 @@ if __name__ == "__main__":
     y = model(x)
     end = time.time()
     print("TF model time: ", end-start)
-    # print(y.shape)
+    print(y.shape)

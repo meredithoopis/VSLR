@@ -6,7 +6,7 @@ class ECA(layers.Layer):
         super().__init__(**kwargs)
         self.supports_masking = True
         self.kernel_size = kernel_size
-        self.conv = layers.Conv1D(1, kernel_size=kernel_size, strides=1, padding="same", use_bias=False)
+        self.conv = layers.Conv1D(1, kernel_size=kernel_size, strides=1, padding="same", use_bias=False)  #output channel 1, add zero padding 
 
     def call(self, inputs, mask=None):
         nn = layers.GlobalAveragePooling1D()(inputs, mask=mask)
@@ -21,11 +21,11 @@ class ECA(layers.Layer):
 
         return inputs * nn
     
-class SE(layers.Layer):
+class SE(layers.Layer): #Squeeze execution layer 
     def __init__(self, kernel_size=5, **kwargs):
         super().__init__(**kwargs)
 
-class CausalDWConv1D(layers.Layer):
+class CausalDWConv1D(layers.Layer): #Causal depthwise convolution1D 
     def __init__(self, 
         kernel_size=15,
         dilation_rate=1,
@@ -51,18 +51,18 @@ class CausalDWConv1D(layers.Layer):
     
     
 def MBBlock(channel_size,
-          kernel_size,
-          dilation_rate=1,
-          drop_rate=0.0,
-          expand_ratio=2,
-          activation='swish',
-          name=None):
+            kernel_size,
+            dilation_rate=1,
+            drop_rate=0.0,
+            expand_ratio=2,
+            activation='swish',
+            name=None): #Mobile inverted bottleneck 
 
     if name is None:
         name = str(tf.keras.backend.get_uid("mblock"))
     # Expansion phase
     def apply(inputs):
-        channels_in = tf.keras.backend.int_shape(inputs)[-1]
+        channels_in = tf.keras.backend.int_shape(inputs)[-1] #Get number of channels 
         channels_expand = channels_in * expand_ratio
 
         skip = inputs
@@ -92,16 +92,21 @@ def MBBlock(channel_size,
             x = tf.keras.layers.Dropout(drop_rate, noise_shape=(None,1,1), name=name + '_drop')(x)
 
         if (channels_in == channel_size):
-            x = tf.keras.layers.add([x, skip], name=name + '_add')
+            x = tf.keras.layers.add([x, skip], name=name + '_add') #Residual connection 
         return x
 
     return apply
 
 if __name__ == "__main__":
-    model = ECA()
-    x = tf.random.normal((32, 100, 66))
+    x = tf.random.normal((32, 64, 192))
+    
+    inp = tf.keras.Input((64,192))
+    y = MBBlock(192,17)(inp)
+    model = tf.keras.Model(inp, y)
+    model.summary()
     model(x)
     start = time.time()
     model(x)
     end = time.time()
+    print(model(x))
     print('time for tf',end-start)

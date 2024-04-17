@@ -47,3 +47,17 @@ def TransformerBlock(dim=256, num_heads=4, expand=4, attn_dropout=0.2, drop_rate
         x = layers.Add()([attn_out, x])
         return x
     return apply
+
+import time
+if __name__ == "__main__":
+    x = tf.random.normal((32, 64, 192))
+    
+    inp = tf.keras.Input((64,192))
+    y = TransformerBlock(192)(inp)
+    model = tf.keras.Model(inp, y)
+    model.summary()
+    model(x)
+    start = time.time()
+    model(x)
+    end = time.time()
+    print('time for tf',end-start)
