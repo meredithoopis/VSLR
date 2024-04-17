@@ -1,6 +1,7 @@
 import jax 
 import jax.numpy as jnp 
 from flax import linen as nn 
+
 from flax.linen import initializers 
 
 class ECA(nn.Module):
@@ -69,3 +70,6 @@ class MBBlock(nn.Module):
             x = x + inputs    
         
         return x
+
+from flax.linen import initializers 
+
