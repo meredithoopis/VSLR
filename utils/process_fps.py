@@ -1,6 +1,6 @@
 import cv2 
 import ffmpegcv
-from SL.ultis.video_utils import *
+from video_utils import *
 
 def get_video_encoding_format(video_path):
     video_capture = cv2.VideoCapture(video_path)

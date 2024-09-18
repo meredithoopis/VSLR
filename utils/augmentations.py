@@ -140,11 +140,12 @@ class DataAugmenter:
 
 if __name__ == "__main__":   
     import os
+    
     # print(os.getcwd()) 
     aug = DataAugmenter('record/half.csv')
     aug.spatial_affine()
-    # if np.random.random() < 0.7: 
-    #     aug.flip()
+    #if np.random.random() < 0.7: 
+     #   aug.flip()
     # if np.random.random() < 0.6: 
     #     aug.add_noise()
         

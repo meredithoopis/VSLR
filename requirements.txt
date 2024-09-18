@@ -1,0 +1,12 @@
+mediapipe
+opencv-python
+numpy 
+pandas
+torch
+scipy
+ffmpegcv
+tensorflow 
+tensorflow-addons
+sklearn
+tqdm 
+
